@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"os/user"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/gorilla/mux"
@@ -27,8 +28,10 @@ func main() {
 	fmt.Println("Hello World")
 	srv := createServer()
 
+	fmt.Println(user.Current())
+
 	go func() {
-		fmt.Printf("Service started on http://localhost:%s \n", srv.Addr)
+		fmt.Printf("Service started on http://localhost:%s \n", srv.Server.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
@@ -60,10 +63,18 @@ func createServer() *Server {
 		json.NewEncoder(w).Encode("ok")
 	})
 
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
+
 	port := os.Getenv("PORT")
-	srv := Server{}
-	srv.Addr = port
-	srv.Handler = r
+	fmt.Println("Port: ", port)
+
+	srv := Server{
+		Server: &http.Server{
+			Addr:    port,
+			Handler: r,
+		},
+	}
+	fmt.Println(srv)
 	url := os.Getenv("GIT_REPO_URL")
 	username := os.Getenv("GIT_REPO_USERNAME")
 	token := os.Getenv("GIT_REPO_TOKEN")
@@ -90,4 +101,8 @@ func (s *Server) ReprocessData() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (s *Server) ListenAndServe() error {
+	return s.Server.ListenAndServe()
 }
