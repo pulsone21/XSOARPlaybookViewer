@@ -31,6 +31,8 @@ type Edge struct {
 	Target string `json:"target"`
 }
 
+// TODO Should add ways to populate the type specfic data layouts since they are only maps.
+// Maybe a interface is a better suite here
 func CreateNode(id string, nodeType PlaybookTaskType, data map[string]string) *Node {
 	return &Node{
 		Id:       id,
