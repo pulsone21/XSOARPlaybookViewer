@@ -1,44 +1,76 @@
-import Dagre from "@dagrejs/dagre";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import ELK, { LayoutOptions } from "elkjs/lib/elk.bundled";
+import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import ReactFlow, {
-  ReactFlowProvider,
-  useReactFlow,
   Background,
-  Node,
   Edge,
-  OnNodesChange,
+  Node,
   OnEdgesChange,
-  applyNodeChanges,
+  OnNodesChange,
+  ReactFlowProvider,
   applyEdgeChanges,
+  applyNodeChanges,
+  useReactFlow,
 } from "reactflow";
 
-import { initialNodes, initialEdges } from "./nodes";
 import "reactflow/dist/style.css";
-import ConditionNode from "./Components/ConditionNode";
 import AutomationNode from "./Components/AutomationNode";
+import ConditionNode from "./Components/ConditionNode";
 import LabelNode from "./Components/LabelNode";
 import StartNode from "./Components/StartNode";
+import { initialEdges, initialNodes } from "./assets/test_nodes";
 
+const elk = new ELK();
 
-const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+// Elk has a *huge* amount of options to configure. To see everything you can
+// tweak check out:
+//
+// - https://www.eclipse.org/elk/reference/algorithms.html
+// - https://www.eclipse.org/elk/reference/options.html
+const elkOptions = {
+  "elk.algorithm": "layered",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "100",
+  "elk.spacing.nodeNode": "80",
+};
 
-const getLayoutedElements = (nodes: Node[], edges: Edge[], options: string) => {
-  g.setGraph({ rankdir: options });
+const getLayoutedElements = (
+  nodes: Node[],
+  edges: Edge[],
+  options: LayoutOptions,
+) => {
+  const isHorizontal = options?.["elk.direction"] === "RIGHT";
+  const graph = {
+    id: "root",
+    layoutOptions: options,
+    children: nodes.map((node) => ({
+      ...node,
+      // Adjust the target and source handle positions based on the layout
+      // direction.
+      targetPosition: isHorizontal ? "left" : "top",
+      sourcePosition: isHorizontal ? "right" : "bottom",
 
-  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-  // @ts-expect-error
-  nodes.forEach((node) => g.setNode(node.id, node));
-
-  Dagre.layout(g);
-
-  return {
-    nodes: nodes.map((node) => {
-      const { x, y } = g.node(node.id);
-
-      return { ...node, position: { x, y } };
-    }),
-    edges,
+      // Hardcode a width and height for elk to use when layouting.
+      width: 150,
+      height: 50,
+    })),
+    edges: edges,
   };
+
+  return (
+    elk
+      // @ts-expect-error - Convertion issue from ReactFlow but works anyway
+      .layout(graph)
+      .then((layoutedGraph) => ({
+        // @ts-expect-error - Don't know how to solve the possible undefined issue
+        nodes: layoutedGraph.children.map((node) => ({
+          ...node,
+          // React Flow expects a position property on the node instead of `x`
+          // and `y` fields.
+          position: { x: node.x, y: node.y },
+        })),
+        edges: layoutedGraph.edges,
+      }))
+      .catch(console.error)
+  );
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -50,41 +82,42 @@ const LayoutFlow = () => {
       label: LabelNode,
       start: StartNode,
     }),
-    []
+    [],
   );
   const { fitView } = useReactFlow();
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
-  const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    [setNodes]
+  const onLayout = useCallback(
+    ({ direction, useInitialNodes = false }) => {
+      const opts = { "elk.direction": direction, ...elkOptions };
+      const ns: Node[] = useInitialNodes ? initialNodes : nodes;
+      const es: Edge[] = useInitialNodes ? initialEdges : edges;
+
+      getLayoutedElements(ns, es, opts).then(
+        ({ nodes: layoutedNodes, edges: layoutedEdges }) => {
+          setNodes(layoutedNodes);
+          setEdges(layoutedEdges);
+
+          window.requestAnimationFrame(() => fitView());
+        },
+      );
+    },
+    [nodes, edges, fitView],
   );
-  const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    [setEdges]
-  );
 
-  useEffect(() => {
-    const layouted = getLayoutedElements(nodes, edges, "TB");
-
-    setNodes([...layouted.nodes]);
-    setEdges([...layouted.edges]);
-
-    window.requestAnimationFrame(() => {
-      fitView();
-    });
-  }, [nodes, edges, setNodes, setEdges, fitView]);
+  // Calculate the initial layout on mount.
+  useLayoutEffect(() => {
+    onLayout({ direction: "DOWN", useInitialNodes: true });
+  }, [onLayout]);
 
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
       fitView
       nodeTypes={nodeTypes}
-      //@ts-expect-error
+      //@ts-expect-error - IDK
       attributionPosition="hidden"
     >
       <Background />

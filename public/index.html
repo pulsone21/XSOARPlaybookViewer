@@ -1,33 +1,55 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <link
+      integrity="sha384-MmmmJeEPAxD1iX6n7wdbLW0dteLhwnZNVUFWFcfQKHo0hZKn4FlvIwL/QbAxiiH8"
+      crossorigin="anonymous"
+      rel="icon"
+      href="https://sdx.scsstatic.ch/v2.114.0/images/favicon.ico"
+      type="image/x-icon"
+      sizes="32x32"
+    />
+    <link
+      integrity="sha384-1Vw8E/e4hde3fDcxPuE0dTCNkbv7n5jnh+c8vFi/JSBR69MBPGpFtwa2Aa9C0dGZ"
+      crossorigin="anonymous"
+      rel="icon"
+      href="https://sdx.scsstatic.ch/v2.114.0/images/svgs/swisscom-logo-lifeform.svg"
+      type="image/svg+xml"
+    />
+    <link
+      integrity="sha384-chaYXls8KFU2Z0IjQM6ov610YWOVnbZtPnhqSxZkzSa625S9n8KfM6Z6mpLv5AQN"
+      crossorigin="anonymous"
+      rel="apple-touch-icon"
+      href="https://sdx.scsstatic.ch/v2.114.0/images/swisscom-logo-lifeform-180x180.png"
+    />
 
-  <link integrity="sha384-MmmmJeEPAxD1iX6n7wdbLW0dteLhwnZNVUFWFcfQKHo0hZKn4FlvIwL/QbAxiiH8" crossorigin="anonymous"
-    rel="icon" href="https://sdx.scsstatic.ch/v2.114.0/images/favicon.ico" type="image/x-icon" sizes="32x32">
-  <link integrity="sha384-1Vw8E/e4hde3fDcxPuE0dTCNkbv7n5jnh+c8vFi/JSBR69MBPGpFtwa2Aa9C0dGZ" crossorigin="anonymous"
-    rel="icon" href="https://sdx.scsstatic.ch/v2.114.0/images/svgs/swisscom-logo-lifeform.svg" type="image/svg+xml">
-  <link integrity="sha384-chaYXls8KFU2Z0IjQM6ov610YWOVnbZtPnhqSxZkzSa625S9n8KfM6Z6mpLv5AQN" crossorigin="anonymous"
-    rel="apple-touch-icon" href="https://sdx.scsstatic.ch/v2.114.0/images/swisscom-logo-lifeform-180x180.png">
+    <!-- SDX Web Components CSS (~30 KB gzipped, contains only SDX Web Components) -->
+    <link
+      integrity="sha384-OKOWpkNtriJpyG51bfPOAFK4401cNH8/Q7P+CRmdU+7Lf/KGvIbg8Q/hoyeqMRUj"
+      crossorigin="anonymous"
+      rel="stylesheet"
+      href="https://sdx.scsstatic.ch/v2.114.0/css/webcomponents.min.css"
+    />
 
-  <!-- SDX Web Components CSS (~30 KB gzipped, contains only SDX Web Components) -->
-  <link integrity="sha384-OKOWpkNtriJpyG51bfPOAFK4401cNH8/Q7P+CRmdU+7Lf/KGvIbg8Q/hoyeqMRUj" crossorigin="anonymous"
-    rel="stylesheet" href="https://sdx.scsstatic.ch/v2.114.0/css/webcomponents.min.css">
+    <!-- SDX CSS (~60 KB gzipped alternative which also includes "non Web Component" SDX components) -->
+    <!-- <link integrity="sha384-SM0VdXdqszyyFUHTlTCpoMwMOERa+jW7gcscFtE0kc8YWaZ7mV5z8UxtRhlGukGJ" crossorigin="anonymous" rel="stylesheet" href="https://sdx.scsstatic.ch/v2.114.0/css/sdx.min.css"> -->
 
-  <!-- SDX CSS (~60 KB gzipped alternative which also includes "non Web Component" SDX components) -->
-  <!-- <link integrity="sha384-SM0VdXdqszyyFUHTlTCpoMwMOERa+jW7gcscFtE0kc8YWaZ7mV5z8UxtRhlGukGJ" crossorigin="anonymous" rel="stylesheet" href="https://sdx.scsstatic.ch/v2.114.0/css/sdx.min.css"> -->
+    <!-- SDX Web Components JS (~4 KB gzipped, lazy loads only SDX Web Components effectively used) -->
+    <script
+      integrity="sha384-KqJeMvkts16DD/CtbxmdrBTMEMRZrM+6xQH4N6imFoErchTIjSxvbYmqVnWnUenW"
+      crossorigin="anonymous"
+      type="module"
+      src="https://sdx.scsstatic.ch/v2.114.0/js/webcomponents/webcomponents/webcomponents.esm.js"
+    ></script>
+  </head>
 
-  <!-- SDX Web Components JS (~4 KB gzipped, lazy loads only SDX Web Components effectively used) -->
-  <script integrity="sha384-KqJeMvkts16DD/CtbxmdrBTMEMRZrM+6xQH4N6imFoErchTIjSxvbYmqVnWnUenW" crossorigin="anonymous"
-    type="module" src="https://sdx.scsstatic.ch/v2.114.0/js/webcomponents/webcomponents/webcomponents.esm.js"></script>
-</head>
-
-
-<body class="sdx">
-  <sdx-header navigation='{
+  <body class="sdx">
+    <sdx-header
+      navigation='{
       "index" : {
       "href": "/"
       },
@@ -42,12 +64,10 @@
       "href":"/viewer"
       }
       ]}
-  }'></sdx-header>
-  <div id="root">
+  }'
+    ></sdx-header>
+    <div style="" id="root"></div>
+  </body>
 
-  </div>
-</body>
-
-<script src="assets/index.js"></script>
-
+  <script src="assets/index.js"></script>
 </html>
