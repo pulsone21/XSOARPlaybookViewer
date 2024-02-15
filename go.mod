@@ -3,10 +3,9 @@ module github.com/pulsone21/PlaybookViewer
 go 1.21.6
 
 require (
-	github.com/evanw/esbuild v0.20.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/gorilla/mux v1.8.1
-	github.com/robfig/cron/v3 v3.0.1
+	github.com/robfig/cron v1.2.0
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v3 v3.0.1
 )

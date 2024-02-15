@@ -8,44 +8,39 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Playbooks struct {
-	Playbooks map[string]Playbook
-}
-
-func ProcessData() error {
+func ProcessData() (*DataHolder, error) {
 	// Iterate over all playbook files
 	start := time.Now()
 	files, err := os.ReadDir("./data")
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	Playbooks := Playbooks{}
+	// IDEA -> Go Concurency ??
+	dataHolder := DataHolder{}
 
 	for _, file := range files {
-		fmt.Println(file.Name())
+		// fmt.Println(file.Name())
 
-		fmt.Println("Trying to load file:", file.Name())
+		// fmt.Println("Trying to load file:", file.Name())
 		rawContent, err := os.ReadFile(file.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		fmt.Println("File Content Loaded")
+		// fmt.Println("File Content Loaded")
 		var content map[string]interface{}
 		err = yaml.Unmarshal(rawContent, &content)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		pb, err := extractPlaybook(content, file.Name())
-
 		if err != nil {
-			return err
+			return nil, err
 		}
-		fmt.Println(pb)
+		// fmt.Println(pb)
 
 		// store them in a map with the filename as key
-		Playbooks.Playbooks[file.Name()] = *pb
+		dataHolder.Playbooks[file.Name()] = *pb
 	}
 
 	// create the needed data structure for the visualisation
@@ -54,7 +49,7 @@ func ProcessData() error {
 	// if its to long we should pre calc every data strucutre if not we can do it on the fly.
 	fin := time.Now()
 	fmt.Println("Finished in", fin.Sub(start))
-	return nil
+	return &dataHolder, nil
 }
 
 func extractPlaybook(content map[string]interface{}, fileName string) (*Playbook, error) {
@@ -63,18 +58,18 @@ func extractPlaybook(content map[string]interface{}, fileName string) (*Playbook
 	playbook.Name = content["name"].(string)
 	playbook.FileName = fileName
 	playbook.Id = content["id"].(string)
-	fmt.Println("Playbook created, starting to going over the Tasks")
+	// fmt.Println("Playbook created, starting to going over the Tasks")
 
-	//Extract the tasks
+	// Extract the tasks
 	for k, v := range content["tasks"].(map[string]interface{}) {
 		task := extractTask(k, v.(map[string]interface{}))
-		fmt.Println("NextTasks assignt")
+		// fmt.Println("NextTasks assignt")
 		playbook.NextTasks = append(playbook.NextTasks, *task)
 	}
-	//Extract Inputs
+	// Extract Inputs
 	playbook.Inputs = extractInputs(content["inputs"].([]interface{}))
 
-	//Extract Outputs
+	// Extract Outputs
 	playbook.Outputs = extractOutputs(content["outputs"].([]interface{}))
 
 	return &playbook, nil
@@ -93,16 +88,16 @@ func extractNextTask(nextTasks map[string]interface{}) map[string][]string {
 }
 
 func extractTask(k string, val map[string]interface{}) *PlaybookTask {
-	fmt.Println("Converted val")
+	// fmt.Println("Converted val")
 	task := PlaybookTask{
 		Id:   k,
 		Type: toTaskType(val["type"].(string)),
 	}
 
-	fmt.Println("Created Task with base infos")
+	// fmt.Println("Created Task with base infos")
 	task.Task = val["task"].(map[string]interface{})
 
-	fmt.Println("Created Task with task infos")
+	// fmt.Println("Created Task with task infos")
 	if val["nexttasks"] != nil {
 		task.NextTasks = extractNextTask(val["nexttasks"].(map[string]interface{}))
 	}
