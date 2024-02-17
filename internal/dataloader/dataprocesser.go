@@ -3,6 +3,7 @@ package dataloader
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -16,18 +17,20 @@ func ProcessData() (*DataHolder, error) {
 		return nil, err
 	}
 	// IDEA -> Go Concurency ??
-	dataHolder := DataHolder{}
+	dataHolder := DataHolder{
+		Playbooks: map[string]Playbook{},
+	}
 
 	for _, file := range files {
-		// fmt.Println(file.Name())
+		fmt.Println(file.Name())
 
-		// fmt.Println("Trying to load file:", file.Name())
-		rawContent, err := os.ReadFile(file.Name())
+		fmt.Println("Trying to load file:", file.Name())
+		rawContent, err := os.ReadFile(fmt.Sprintf("./data/%s", file.Name()))
 		if err != nil {
 			return nil, err
 		}
 
-		// fmt.Println("File Content Loaded")
+		fmt.Println("File Content Loaded")
 		var content map[string]interface{}
 		err = yaml.Unmarshal(rawContent, &content)
 		if err != nil {
@@ -37,7 +40,7 @@ func ProcessData() (*DataHolder, error) {
 		if err != nil {
 			return nil, err
 		}
-		// fmt.Println(pb)
+		fmt.Println(pb)
 
 		// store them in a map with the filename as key
 		dataHolder.Playbooks[file.Name()] = *pb
@@ -53,18 +56,17 @@ func ProcessData() (*DataHolder, error) {
 }
 
 func extractPlaybook(content map[string]interface{}, fileName string) (*Playbook, error) {
-	//    fmt.Println(content)
+	fmt.Println(content)
 	var playbook Playbook
-	playbook.Name = content["name"].(string)
 	playbook.FileName = fileName
 	playbook.Id = content["id"].(string)
-	// fmt.Println("Playbook created, starting to going over the Tasks")
+	fmt.Println("Playbook created, starting to going over the Tasks")
+	playbook.Name = content["task"].(map[string]interface{})["name"].(string)
 
 	// Extract the tasks
 	for k, v := range content["tasks"].(map[string]interface{}) {
 		task := extractTask(k, v.(map[string]interface{}))
-		// fmt.Println("NextTasks assignt")
-		playbook.NextTasks = append(playbook.NextTasks, *task)
+		playbook.Tasks = append(playbook.Tasks, task)
 	}
 	// Extract Inputs
 	playbook.Inputs = extractInputs(content["inputs"].([]interface{}))
@@ -75,34 +77,52 @@ func extractPlaybook(content map[string]interface{}, fileName string) (*Playbook
 	return &playbook, nil
 }
 
-func extractNextTask(nextTasks map[string]interface{}) map[string][]string {
-	nT := make(map[string][]string)
-	for k, v := range nextTasks {
-		strings := []string{}
-		for _, item := range v.([]interface{}) {
-			strings = append(strings, item.(string))
+func extractTask(k string, val map[string]interface{}) Task {
+	str := strings.ToLower(val["type"].(string))
+	task := val["task"].(map[string]string)
+	taskId := val["taskid"].(string)
+	nTs := val["nexttasks"].(map[string][]string)
+
+	switch str {
+	case "collection":
+		return CreateCollectionTask(k, taskId, task["name"], task["description"], nTs)
+
+	case "condition":
+		return CreateConditionTask(k, taskId, nTs)
+
+	case "title":
+		return CreateTitleTask(k, taskId, nTs)
+
+	case "start":
+		return CreateStartTask(k, taskId, nTs)
+
+	case "playbook":
+		args := []string{}
+		for k := range val["scriptarguments"].(map[string]string) {
+			args = append(args, k)
 		}
-		nT[k] = strings
+		pbId := task["playbookId"]
+		desc := task["description"]
+		name := task["name"]
+		return CreatePlaybookTask(k, taskId, pbId, desc, name, args, nTs)
+
+	case "builtin":
+		args := []string{}
+		for k := range val["scriptarguments"].(map[string]string) {
+			args = append(args, k)
+		}
+		return CreateAutomationTask(k, taskId, task["description"], task["name"], args, nTs)
+
+	case "automation":
+		args := []string{}
+		for k := range val["scriptarguments"].(map[string]string) {
+			args = append(args, k)
+		}
+		return CreateAutomationTask(k, taskId, task["description"], task["name"], args, nTs)
 	}
-	return nT
-}
 
-func extractTask(k string, val map[string]interface{}) *PlaybookTask {
-	// fmt.Println("Converted val")
-	task := PlaybookTask{
-		Id:   k,
-		Type: toTaskType(val["type"].(string)),
-	}
-
-	// fmt.Println("Created Task with base infos")
-	task.Task = val["task"].(map[string]interface{})
-
-	// fmt.Println("Created Task with task infos")
-	if val["nexttasks"] != nil {
-		task.NextTasks = extractNextTask(val["nexttasks"].(map[string]interface{}))
-	}
-
-	return &task
+	fmt.Println(fmt.Errorf("PlaybookTaskType: %s not mapped in extract task", str))
+	return nil
 }
 
 func extractInputs(inputs []interface{}) []PlaybookInput {

@@ -1,14 +1,49 @@
 package dataloader
 
 type GraphContent struct {
-	Nodes []Node `json:"nodes"`
-	Edges []Edge `json:"edges"`
+	PlaybookName string  `json:"playbook_name"`
+	Nodes        []Nodes `json:"nodes"`
+	Edges        []Edge  `json:"edges"`
 }
+
+type SubGraph struct {
+	Nodes []Nodes
+	Edges []Edge
+}
+
+type Nodes interface {
+	GetId() string
+}
+
 type Node struct {
-	Id       string            `json:"id"`
-	NodeType PlaybookTaskType  `json:"type"`
-	Data     map[string]string `json:"data"`
-	Position NodePosition      `json:"position"`
+	Id       string                 `json:"id"`
+	NodeType PlaybookTaskType       `json:"type"`
+	Data     map[string]interface{} `json:"data"`
+	Position NodePosition           `json:"position"`
+}
+
+func (n Node) GetId() string { return n.Id }
+
+type ChildNode struct {
+	Id         string                 `json:"id"`
+	NodeType   PlaybookTaskType       `json:"type"`
+	Data       map[string]interface{} `json:"data"`
+	Position   NodePosition           `json:"position"`
+	ParentNode string                 `json:"parentNode"`
+	Extent     string                 `json:"extent"`
+}
+
+func (n ChildNode) GetId() string { return n.Id }
+
+type Edge struct {
+	Id     string `json:"id"`
+	Source string `json:"source"`
+	Target string `json:"target"`
+	Label  string `json:"label"`
+}
+
+type NodeData interface {
+	GetData() map[string]interface{}
 }
 
 type NodePosition struct {
@@ -16,24 +51,69 @@ type NodePosition struct {
 	Y int `json:"y"`
 }
 
-type ChildNode struct {
-	Id         string            `json:"id"`
-	NodeType   PlaybookTaskType  `json:"type"`
-	Data       map[string]string `json:"data"`
-	Position   NodePosition      `json:"position"`
-	ParentNode string            `json:"parentNode"`
-	Extent     string            `json:"extent"`
+type ConditionNodeData struct {
+	label      string
+	conditions []string
 }
 
-type Edge struct {
-	Id     string `json:"id"`
-	Source string `json:"source"`
-	Target string `json:"target"`
+func (d ConditionNodeData) GetData() map[string]interface{} {
+	m := make(map[string]interface{})
+	m["label"] = d.label
+	m["conditions"] = d.conditions
+	return m
+}
+
+type TitleNodeData struct {
+	label string
+}
+
+func (d TitleNodeData) GetData() map[string]interface{} {
+	m := make(map[string]interface{})
+	m["label"] = d.label
+	return m
+}
+
+type AutomationNodeData struct {
+	label string
+	args  []string
+}
+
+func (d AutomationNodeData) GetData() map[string]interface{} {
+	m := make(map[string]interface{})
+	m["label"] = d.label
+	m["args"] = d.args
+	return m
+}
+
+type CollectionNodeData struct {
+	label       string
+	description string
+}
+
+func (d CollectionNodeData) GetData() map[string]interface{} {
+	m := make(map[string]interface{})
+	m["label"] = d.label
+	m["description"] = d.description
+	return m
+}
+
+type PlaybookNodeData struct {
+	label       string
+	description string
+	args        []string
+}
+
+func (d PlaybookNodeData) GetData() map[string]interface{} {
+	m := make(map[string]interface{})
+	m["label"] = d.label
+	m["description"] = d.description
+	m["args"] = d.args
+	return m
 }
 
 // TODO Should add ways to populate the type specfic data layouts since they are only maps.
 // Maybe a interface is a better suite here
-func CreateNode(id string, nodeType PlaybookTaskType, data map[string]string) *Node {
+func CreateNode(id string, nodeType PlaybookTaskType, data map[string]interface{}) *Node {
 	return &Node{
 		Id:       id,
 		NodeType: nodeType,
@@ -45,7 +125,7 @@ func CreateNode(id string, nodeType PlaybookTaskType, data map[string]string) *N
 	}
 }
 
-func CreateChildeNode(id, parentId string, nodeType PlaybookTaskType, data map[string]string) *ChildNode {
+func CreateChildeNode(id, parentId string, nodeType PlaybookTaskType, data map[string]interface{}) *ChildNode {
 	return &ChildNode{
 		Id:       id,
 		NodeType: nodeType,
