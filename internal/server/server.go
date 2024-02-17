@@ -47,6 +47,7 @@ func CreateServer() *Server {
 
 	r.HandleFunc("/api/playbooks/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["id"]
+		fmt.Println("id: ", id)
 		pb := srv.Data.GetPlaybook(id)
 		if pb == nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -59,19 +60,15 @@ func CreateServer() *Server {
 
 	r.HandleFunc("/api/playbooks/view/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["id"]
-		pb, err := srv.Data.GetPlaybookView(id)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(err.Error())
-			return
-		}
-		if pb == nil {
+		gC := srv.Data.GetPlaybookView(id)
+
+		if gC == nil {
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(fmt.Sprintf("Playbook with %s not found.", id))
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(pb)
+		json.NewEncoder(w).Encode(gC)
 	})
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
 
@@ -83,7 +80,7 @@ func CreateServer() *Server {
 		log.Fatal(err)
 	}
 	srv.Repo = repo
-
+	srv.ReprocessData()
 	srv.Cron = cron.New()
 	srv.Cron.AddFunc("* 10 4 * * *", srv.ReprocessData)
 	srv.Cron.Start()

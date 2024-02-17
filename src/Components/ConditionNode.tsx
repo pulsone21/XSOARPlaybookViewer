@@ -48,4 +48,3 @@ export default function ConditionNode({ data }: NodeProps<ConditionNodeData>) {
     </ContainerNode>
   );
 }
-
